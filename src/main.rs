@@ -1,9 +1,3 @@
-//use std::ops::{Deref, DerefMut};
-
-
-use std::borrow::{Borrow, BorrowMut};
-use std::cell::RefCell;
-use std::ops::{Deref, DerefMut};
 
 #[derive(Debug, Clone)]
 struct Node<T> {
@@ -68,6 +62,10 @@ mod test {
     use std::ops::{Deref, DerefMut};
     use crate::Node;
 
+
+    ///
+    /// Create a binary tree with pure integers
+    ///
     #[test]
     fn test_integer_tree() {
         let node_a = Node::new(200);
@@ -102,6 +100,10 @@ mod test {
     }
 
 
+    ///
+    /// Create a binary tree with references to an integer.
+    /// We can separately change the value of nodes
+    ///
     #[test]
     fn test_tree_of_references() {
         let amount = 34_000_000;
@@ -112,6 +114,11 @@ mod test {
         println!("Ref node : {:?}", &ref_node);
     }
 
+    ///
+    /// Create a binary tree of RefCell, so
+    /// we can place the same struct on each node.
+    /// We modify the reference's value, it changes for all the nodes.
+    ///
     #[test]
     fn test_tree_of_same_structure() {
         #[derive(Clone)]
@@ -119,21 +126,28 @@ mod test {
             a : i64,
         }
 
-        let mut val = Box::new(A { a : 34_000_000_i64 });
-        let mut amount = RefCell::new(val);
+        // Create a structure on the heap
+        let val = Box::new(A { a : 34_000_000_i64 });
+        // Enclose it into a RefCell to allow borrowing and inner mutability
+        let amount = RefCell::new(val);
+        // Print the initial value
         let a = amount.borrow().deref().a;
-        println!("Ref a : {:?}", &a);
+        println!("Initial root node value : {:?}", &a);
 
+        // Create the root node, pointing at the RefCell
         let mut root_node = Node::new(&amount);
+        // Setting the left node with the same RefCell
         root_node.as_mut().set_left(Node::new(&amount));
-
-        let mut amt = root_node.as_mut().set_right(Node::new(&amount));
-        // We change the value on the right node
-        root_node.as_mut().value.borrow_mut().deref_mut().a = 1000_i64;
+        // Setting the right node with the same RefCell and get the node reference back in return
+        let amt = root_node.as_mut().set_right(Node::new(&amount));
+        // Change the value on the right node
+        amt.as_mut().value.borrow_mut().deref_mut().a = 1000_i64;
 
         // The value has changed also on the root node !!! :))
-        let a = root_node.as_ref().value.borrow().a; // It's actually ".deref().deref().a";
-        println!("Ref aaa : {:?}", a);
+        let root_a = root_node.as_ref().value.borrow().a; // It's actually ".deref().deref().a";
+        println!("Root node value : {:?}", root_a);
+
+        assert_eq!(1000_i64, root_a);
     }
 
 }
