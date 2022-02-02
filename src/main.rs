@@ -109,29 +109,27 @@ mod test {
         let cc = &mut *root;
         println!("Address of root raw : {:p}", cc);
 
-        let _ = root.as_mut().set_left(node_a);
-        let _ = root.as_mut().set_right(node_b);
+        let _ = root.set_left(node_a);
+        let _ = root.set_right(node_b);
 
         println!("Root : [{:?}]", &root);
         println!("Node a :  [{:?}]", &root.left);
 
         let mut left_node = root.left.unwrap();
-        let parent = left_node.as_mut().get_parent();
+        let parent = left_node.get_parent();
         // println!("Node parent :  [{:?}]", &parent.unwrap());
         parent.unwrap().value = 999;
 
         {
             let node_2a = Node::new(400);
-            let node_2a_ref = left_node.as_mut().set_left(node_2a);
+            let node_2a_ref = left_node.set_left(node_2a);
             node_2a_ref.value = 401;
             println!("Node 2 a ref :  [{:?}]", node_2a_ref);
         }
-
         let parent_2 = left_node.get_parent();
         // println!("Node parent 2 :  [{:?}]", &parent_2.unwrap());
 
         let pp = parent_2.unwrap();
-
         let p_value = pp.read_value(); // &pp.value;
         assert_eq!(999, *p_value);
 
@@ -149,8 +147,8 @@ mod test {
     fn test_tree_of_references() {
         let amount = 34_000_000;
         let mut ref_node = Node::new(&amount);
-        ref_node.as_mut().set_left(Node::new(&amount));
-        let amt = ref_node.as_mut().set_right(Node::new(&amount));
+        ref_node.set_left(Node::new(&amount));
+        let amt = ref_node.set_right(Node::new(&amount));
         amt.value = &1000;
         //println!("Ref node : {:?}", &ref_node);
         let value = ref_node.read_value().deref();
@@ -174,15 +172,15 @@ mod test {
         // Enclose it into a RefCell to allow borrowing and inner mutability
         let amount = RefCell::new(val);
         // Print the initial value
-        let a = amount.borrow().deref().a;
+        let a = amount.borrow().a;
         println!("Initial root node value : {:?}", &a);
 
         // Create the root node, pointing at the RefCell
         let mut root_node = Node::new(&amount);
         // Setting the left node with the same RefCell
-        root_node.as_mut().set_left(Node::new(&amount));
+        root_node.set_left(Node::new(&amount)); // Actually,   root_node.as_mut().set_left(Node::new(&amount));
         // Setting the right node with the same RefCell and get the node reference back in return
-        let amt = root_node.as_mut().set_right(Node::new(&amount));
+        let amt = root_node.set_right(Node::new(&amount));
         // Change the value on the right node
         amt.read_value().borrow_mut().deref_mut().a = 1000_i64;
         // amt.as_mut().value.borrow_mut().deref_mut().a = 1000_i64;
