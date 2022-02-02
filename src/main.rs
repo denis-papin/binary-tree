@@ -1,13 +1,18 @@
 
+
 #[derive(Debug, Clone)]
 struct Node<T> {
-    pub parent: Option<*mut Node<T>>,
-    pub left : Option<Box<Node<T>>>,
-    pub right : Option<Box<Node<T>>>,
-    pub value : T,
+    parent: Option<*mut Node<T>>,
+    left : Option<Box<Node<T>>>,
+    right : Option<Box<Node<T>>>,
+    value : T,
 }
 
 impl <T> Node<T> {
+
+    ///
+    /// We must always use a node via Box<Node>
+    ///
     pub fn new(value : T) -> Box<Self> {
         Box::new(Node {
             parent: None,
@@ -17,7 +22,10 @@ impl <T> Node<T> {
         })
     }
 
-    pub fn set_left<'a>( &'a mut self, mut left : Box<Node<T>>) -> &'a mut Box<Node<T>> {
+    ///
+    /// Set the left node and define the parent of added node
+    ///
+    pub fn set_left(&mut self, mut left : Box<Node<T>>) -> &mut Box<Node<T>> {
         let self_ptr = self as *mut Node<T>;
         left.parent = Some(self_ptr);
         self.left = Some(left);
@@ -25,7 +33,10 @@ impl <T> Node<T> {
         opt
     }
 
-    pub fn set_right<'a>( &'a mut self, mut right : Box<Node<T>>) -> &'a mut Box<Node<T>> {
+    ///
+    /// Set the right node and define the parent of added node
+    ///
+    pub fn set_right(&mut self, mut right : Box<Node<T>>) -> &mut Box<Node<T>> {
         let self_ptr = self as *mut Node<T>;
         right.parent = Some(self_ptr);
         self.right = Some(right);
@@ -33,8 +44,12 @@ impl <T> Node<T> {
         opt
     }
 
-    pub fn get_parent<'a>(&'a self) -> Option<Box<&'a mut Node<T>>> {
-        let my_parent = match  self.parent {
+
+    ///
+    /// Retrieve the parent of the node
+    ///
+    pub fn get_parent(&self) -> Option<Box<&mut Node<T>>> {
+        let my_parent = match self.parent {
             None => {None}
             Some(raw_ptr) => {
                 let parent;
@@ -49,8 +64,27 @@ impl <T> Node<T> {
         my_parent
     }
 
-}
+    ///
+    ///
+    ///
+    pub fn read_value(&self) -> &T {
+        &self.value
+    }
 
+    ///
+    ///
+    ///
+    pub fn read_left_value(&self) -> Option<&T> {
+        let ret = match &self.left {
+            None => {None}
+            Some(l) => {
+                Some(&l.value)
+            }
+        };
+        ret
+    }
+
+}
 
 fn main() {
 
@@ -83,10 +117,8 @@ mod test {
 
         let mut left_node = root.left.unwrap();
         let parent = left_node.as_mut().get_parent();
-        println!("Node parent :  [{:?}]", &parent.unwrap());
-
-        let pure_parent = left_node.as_mut().get_parent();
-        pure_parent.unwrap().value = 999;
+        // println!("Node parent :  [{:?}]", &parent.unwrap());
+        parent.unwrap().value = 999;
 
         {
             let node_2a = Node::new(400);
@@ -95,8 +127,17 @@ mod test {
             println!("Node 2 a ref :  [{:?}]", node_2a_ref);
         }
 
-        let pure_parent_2 = left_node.get_parent();
-        println!("Node pure parent 2 :  [{:?}]", &pure_parent_2.unwrap());
+        let parent_2 = left_node.get_parent();
+        // println!("Node parent 2 :  [{:?}]", &parent_2.unwrap());
+
+        let pp = parent_2.unwrap();
+
+        let p_value = pp.read_value(); // &pp.value;
+        assert_eq!(999, *p_value);
+
+        let l_value = pp.read_left_value().unwrap(); // &pp.left.as_ref().unwrap().value;
+        assert_eq!(200, *l_value);
+
     }
 
 
@@ -111,7 +152,9 @@ mod test {
         ref_node.as_mut().set_left(Node::new(&amount));
         let amt = ref_node.as_mut().set_right(Node::new(&amount));
         amt.value = &1000;
-        println!("Ref node : {:?}", &ref_node);
+        //println!("Ref node : {:?}", &ref_node);
+        let value = ref_node.read_value().deref();
+        assert_eq!(&34_000_000, value);
     }
 
     ///
@@ -141,10 +184,13 @@ mod test {
         // Setting the right node with the same RefCell and get the node reference back in return
         let amt = root_node.as_mut().set_right(Node::new(&amount));
         // Change the value on the right node
-        amt.as_mut().value.borrow_mut().deref_mut().a = 1000_i64;
+        amt.read_value().borrow_mut().deref_mut().a = 1000_i64;
+        // amt.as_mut().value.borrow_mut().deref_mut().a = 1000_i64;
 
         // The value has changed also on the root node !!! :))
-        let root_a = root_node.as_ref().value.borrow().a; // It's actually ".deref().deref().a";
+        let root_a = root_node.read_value().borrow().a;
+        // let root_a = root_node.as_ref().value.borrow().a; // It's actually ".deref().deref().a";
+
         println!("Root node value : {:?}", root_a);
 
         assert_eq!(1000_i64, root_a);
