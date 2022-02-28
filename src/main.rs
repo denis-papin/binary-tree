@@ -55,6 +55,7 @@ impl <T> Node<T> {
                 let parent;
                 println!("Node p :  [{:?}]", &raw_ptr);
                 unsafe {
+                    // * will defer the raw pointer to Node<>, it's not safe!
                     let box_ref = &mut *raw_ptr;
                     parent = Some(Box::new(box_ref));
                 }
